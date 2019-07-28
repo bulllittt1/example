@@ -7,15 +7,17 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 )
 
 const (
-	requests     = 2
-	pathTemplate = "https://vs2.coursehunters.net/otus-adr/lesson%d.mp4"
+	requests     = 32
+	urlTemplate  = "https://vs2.coursehunters.net/otus-adr/lesson%d.mp4"
 	nameTemplate = "lesson%d.mp4"
 )
 
 func main() {
+	t := time.Now()
 	fmt.Println("start")
 
 	jobs := make(chan int, requests)
@@ -37,8 +39,7 @@ func main() {
 	for i := 0; i < requests; i++ {
 		<-results
 	}
-	fmt.Println("finished")
-
+	fmt.Printf("finished with time: %v\n", time.Since(t))
 }
 
 // DownloadFile will download a url to a local file. It's efficient because it will
@@ -74,20 +75,21 @@ func downloadFile(filepath string, url string) error {
 
 func worker(id int, jobs <-chan int, results chan<- struct{}) {
 	var counter int
-	fmt.Printf("init worker № %d\n", id)
+	fmt.Printf("init worker №%d\n", id)
 	for job := range jobs {
-		fmt.Printf("worker № %d takes job № %d \n", id, job)
+		fmt.Printf("worker №%d takes job №%d\n", id, job)
 
-		path := fmt.Sprintf(nameTemplate, job)
-		fileURL := fmt.Sprintf(pathTemplate, job)
+		name := fmt.Sprintf(nameTemplate, job)
+		url := fmt.Sprintf(urlTemplate, job)
 
-		if err := downloadFile(path, fileURL); err != nil {
-			log.Printf("job № %d: failed to download %s\n", id, path)
-			return
+		if err := downloadFile(name, url); err != nil {
+			log.Printf("worker №%d failed to complete job №%d: %v\n", id, job, err)
+			goto finish
 		}
-		fmt.Printf("worker № %d finished № job \n", id)
+		fmt.Printf("worker №%d finished job №%d\n", id, job)
 		counter++
+	finish:
 		results <- struct{}{}
 	}
-	fmt.Printf("end worker № %d with %d jobs finished\n", id, counter)
+	fmt.Printf("end of worker №%d with %d jobs done\n", id, counter)
 }
