@@ -35,14 +35,15 @@ func main() {
 }
 
 func mover(d time.Duration) {
-	fmt.Println("Timeout", *dur)
+	fmt.Println("Timeout", d)
 	var trigger bool
 	for {
+		dist := rand.Intn(10)
 		if trigger {
-			robotgo.ScrollMouse(10, "up")
+			robotgo.ScrollMouse(dist, "up")
 			trigger = false
 		} else {
-			robotgo.ScrollMouse(10, "down")
+			robotgo.ScrollMouse(dist, "down")
 			trigger = true
 		}
 		time.Sleep(d)
