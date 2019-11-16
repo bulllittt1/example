@@ -10,13 +10,22 @@ import (
 	"github.com/go-vgo/robotgo"
 )
 
+const version = 1
+
 var (
-	dur   = flag.Duration("d", time.Minute, "Timeout for mover")
 	crazy = flag.Bool("crazy", false, "Random mouse moving and clicking")
+	d     = flag.Bool("d", false, "Use default settings")
+	dur   = flag.Duration("duration", time.Minute, "Timeout for mover")
 )
 
+var defaultDurations = []time.Duration{9, 9, 11}
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
+
 func main() {
-	fmt.Println("Started")
+	fmt.Println("Started version:", version)
 	flag.Parse()
 
 	go func() {
@@ -27,45 +36,70 @@ func main() {
 		}
 	}()
 
-	if *crazy {
+	switch {
+	case *crazy:
+		fmt.Println("Crazy mode. Have fun;)")
+		time.Sleep(time.Second)
+		fmt.Println("   3")
+		time.Sleep(time.Second)
+		fmt.Println("    2")
+		time.Sleep(time.Second)
+		fmt.Println("     1")
+		time.Sleep(time.Second)
 		crazymover()
-	} else {
-		mover(*dur)
+	case *d:
+		fmt.Println("Default settings")
+		defaultScroller()
+	default:
+		fmt.Println("Timeout", *dur)
+		scroller(*dur)
 	}
+
 }
 
-func mover(d time.Duration) {
-	fmt.Println("Timeout", d)
-	var trigger bool
+func scroller(d time.Duration) {
+	var (
+		up       bool
+		distance int
+	)
 	for {
-		dist := rand.Intn(10)
-		if trigger {
-			robotgo.ScrollMouse(dist, "up")
-			trigger = false
+		distance = rand.Intn(10)
+		if up {
+			robotgo.ScrollMouse(distance, "up")
+			up = false
 		} else {
-			robotgo.ScrollMouse(dist, "down")
-			trigger = true
+			robotgo.ScrollMouse(distance, "down")
+			up = true
 		}
 		time.Sleep(d)
 	}
 }
 
+func defaultScroller() {
+	var (
+		up       bool
+		distance int
+		i        int
+	)
+	for {
+		distance = rand.Intn(10)
+		if up {
+			robotgo.ScrollMouse(distance, "up")
+			up = false
+		} else {
+			robotgo.ScrollMouse(distance, "down")
+			up = true
+		}
+		i = rand.Intn(3)
+		time.Sleep(defaultDurations[i] * time.Minute)
+	}
+}
+
 func crazymover() {
-	fmt.Println("Crazy mode. Have fun;)")
-	time.Sleep(time.Second)
-	fmt.Println("   3")
-	time.Sleep(time.Second)
-	fmt.Println("    2")
-	time.Sleep(time.Second)
-	fmt.Println("     1")
-	time.Sleep(time.Second)
-
 	x0, y0 := robotgo.GetScreenSize()
-
 	for {
 		x := rand.Intn(x0)
 		y := rand.Intn(y0)
-
 		robotgo.MoveMouseSmooth(2*x, y, 0.001, 0.001)
 		robotgo.MouseClick("left", true)
 	}
