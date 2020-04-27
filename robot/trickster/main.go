@@ -11,12 +11,14 @@ import (
 )
 
 // second version adds key pressing
-const version = 2
+// third version adds timer
+const version = 3
 
 var (
 	d     = flag.Bool("d", false, "Use default strategy")
 	dur   = flag.Duration("duration", time.Minute, "Timeout for mover")
 	crazy = flag.Bool("crazy", false, "Random mouse moving and clicking")
+	t     = flag.Duration("t", 8*time.Hour, "Set timer to turn off")
 )
 
 var defaultDurations = []time.Duration{9, 9, 11}
@@ -28,6 +30,14 @@ func init() {
 func main() {
 	fmt.Println("Start version #", version)
 	flag.Parse()
+
+	// Set up timer
+	go func() {
+		fmt.Println("Timer: ", *t)
+		time.Sleep(*t)
+		fmt.Println("Clock up")
+		os.Exit(0)
+	}()
 
 	// Monitor f10 keytap to shutdown
 	go func() {
@@ -95,7 +105,7 @@ func defaultStrategy() {
 		index    int
 	)
 	for {
-		random := rand.Intn(9) + 1
+		random := rand.Intn(10) + 1
 		// scroll mouse
 		distance = random
 		if up {
@@ -111,7 +121,7 @@ func defaultStrategy() {
 			robotgo.KeyTap("alt")
 			j++
 		}
-		// random sleep interval
+		// choose sleep interval randomly
 		index = rand.Intn(3)
 		time.Sleep(defaultDurations[index] * time.Minute)
 	}
